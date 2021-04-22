@@ -1,6 +1,6 @@
 import ormar
 import shutil
-from uuid import uuid4
+from pydantic import UUID4
 from pathlib import Path
 from typing import IO, Generator, List
 
@@ -18,7 +18,7 @@ async def save_video(
     title: str,
     description: str
 ):
-    file_name = f'media/{user.id}/{uuid4()}.mp4'
+    file_name = f'media/{user.id}/{UUID4()}.mp4'
     if file.content_type == 'video/mp4':
         # back_tasks.add_task(write_video, file_name, file)
         await write_video(file_name, file)

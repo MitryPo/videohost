@@ -1,16 +1,20 @@
-from user.schemas import UserDB
 from starlette.requests import Request
-import os
-
-def on_after_register(user: UserDB, request: Request):
-    if not os.path.isdir(f"media/{user.id}"):
-        os.mkdir(f"media/{user.id}")
-        print(f"User {user.id} has registered")
+from starlette.templating import Jinja2Templates
+from fastapi import APIRouter
+from . import schemas, services
 
 
-def send_sms(user: UserDB, request: Request) -> None:
-    print(f"User {user.id} has registered. {123456}")
+
+templates = Jinja2Templates(directory='templates')
+user_router = APIRouter(tags=["auth"])
 
 
-def after_verification(user: UserDB, token: str, request: Request) -> None:
-    print(f"")
+@user_router.get('/')
+async def google_auth(request: Request):
+    return templates.TemplateResponse("auth.html", {"request": request})
+
+
+@user_router.post('/google/auth', response_model=schemas.Token)
+async def google_auth(user: schemas.UserCreate):
+    user_id, token = await services.google_auth(user)
+    return schemas.Token(id=user_id, token=token)

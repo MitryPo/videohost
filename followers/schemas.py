@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-from typing import List
 from user.schemas import UserOut
 
 

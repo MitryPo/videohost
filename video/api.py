@@ -1,26 +1,25 @@
 from typing import List
 
 from fastapi import APIRouter, File, Form, UploadFile, Depends
-from starlette import responses
 from starlette.requests import Request
 from starlette.responses import HTMLResponse, StreamingResponse
 from starlette.templating import Jinja2Templates
 
-from user.auth import current_active_user
+from user.auth import get_user
 from video.models import User, Video
-from video.schemas import GetListVideo
+from video.schemas import GetListVideo, GetVideo
 from video.services import open_file, save_video
 
-video_router = APIRouter(tags=["video"])
+video_router = APIRouter(prefix='/video', tags=["video"])
 templates = Jinja2Templates(directory="templates")
 
 
-@video_router.post('/')
+@video_router.post('/', response_model=GetVideo)
 async def create_video(
     title: str = Form(...),
     description: str = Form(...),
     file: UploadFile = File(...),
-    user: User = Depends(current_active_user)
+    user: User = Depends(get_user)
 ):
     return await save_video(
         user,
@@ -30,16 +29,23 @@ async def create_video(
     )
 
 
-# @video_router.get("/video/{video_pk}")
-# async def get_video(video_pk:int):
-#     file = await Video.objects.select_related('user').get(pk=video_pk)
-#     open_file = open(file.dict().get('file'), mode='rb')
-#     return StreamingResponse(open_file, media_type="video/mp4")
+@video_router.post("/{video_pk}", status_code=201)
+async def add_like(video_pk: int, user: User = Depends(get_user)):
+    _video = await Video.objects.select_related("like_user").get(pk=video_pk)
+    _user= await User.objects.get(id=user.id)
+    if _user in _video.like_user:
+        _video.likes -= 1
+        await _video.like_user.remove(_user)
+    else:
+        _video.likes += 1
+        await _video.like_user.add(_user)
+    await _video.update()
 
 
-@video_router.get("/user/{user_pk}", response_model=List[GetListVideo])
-async def get_user_video(user_pk: str):
-    video_list = await Video.objects.filter(user=user_pk).all()
+
+@video_router.get("/user/{user_name}", response_model=List[GetListVideo])
+async def get_user_video(user_name: str):
+    video_list = await Video.objects.filter(user__username=user_name).all()
     return video_list
 
 

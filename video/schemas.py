@@ -1,5 +1,5 @@
+from user.schemas import UserOut
 from pydantic import BaseModel
-from typing import List
 
 
 class User(BaseModel):
@@ -19,4 +19,4 @@ class GetListVideo(BaseModel):
 
 
 class GetVideo(GetListVideo):
-    user: User
+    user: UserOut

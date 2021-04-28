@@ -9,5 +9,3 @@
 - Framework - FastApi
 - ORM - ORMAR
 - DB - SQLite
-
-## Frontend
